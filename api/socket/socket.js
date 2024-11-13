@@ -88,21 +88,8 @@ io.on('connection', async (socket) => {
             "$push": { messages: savedMessage?._id }
         })
 
-        const getChatMessages = await Chat.findOne({
-            "$or": [
-                { sender: data?.sender, recipient: data?.recipient },
-                { sender: data?.recipient, recipient: data?.sender }
-            ]
-        }).populate('messages').sort({ updatedAt: -1 })
-
-        io.to(data?.sender).emit('message', getChatMessages?.messages || [])
-        io.to(data?.recipient).emit('message', getChatMessages?.messages || [])
-
-        const chatSender = await getChat(data?.sender)
-        const chatRecipient = await getChat(data?.recipient)
-
-        io.to(data?.sender).emit('chat', chatSender)
-        io.to(data?.recipient).emit('chat', chatRecipient)
+        io.to(data?.sender).emit('new-message', { ...savedMessage.toObject(), senderId: data.sender });
+        io.to(data?.recipient).emit('new-message', { ...savedMessage.toObject(), senderId: data.sender });
     })
 
     socket.on('logout', () => {

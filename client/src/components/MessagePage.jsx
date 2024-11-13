@@ -11,6 +11,8 @@ import { IoClose } from "react-icons/io5"
 import { IoMdSend } from "react-icons/io";
 import axios from "axios";
 import moment from 'moment'
+import messageSendSound from "../assets/sounds/MessageSend.mp3"
+import messageReceiveSound from "../assets/sounds/MessageReceive.mp3";
 
 const MessagePage = () => {
     const params = useParams();
@@ -129,6 +131,9 @@ const MessagePage = () => {
                     imageUrl: "",
                     videoUrl: ""
                 })
+
+                const sound = new Audio(messageSendSound);
+                sound.play();
             }
         }
     }
@@ -143,9 +148,25 @@ const MessagePage = () => {
                 setUserData(data)
             })
 
+            const handleNewMessage = (newMessage) => {
+                setAllMessage(prevMessages => [...prevMessages, newMessage]);
+
+                if (newMessage.senderId !== user._id) {
+                    const receiveSound = new Audio(messageReceiveSound);
+                    receiveSound.play();
+                }
+            };
+
             socket.on('message', (data) => {
                 setAllMessage(data)
             })
+
+            socket.on('new-message', handleNewMessage);
+
+            return () => {
+                socket.off('new-message', handleNewMessage);
+                socket.off('message');
+            };
         }
     }, [socket, params.userId, user]);
 
